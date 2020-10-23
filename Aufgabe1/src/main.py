@@ -81,7 +81,11 @@ def recursiveSolution(searched, given, cat):
             continue
     if len(given[cat]) != 0:  # See notes for logical reference
         fixDuplicateWords(searched, given, cat)
-        recursiveSolution(searched, given, cat)
+        try:
+            recursiveSolution(searched, given, cat)
+        except RecursionError:
+            print("This riddle is not solvable because some words are not distinctly assignable.")
+            return
     return
 
 
