@@ -4,6 +4,7 @@
 #include <unordered_set>
 #include <set>
 #include <string>
+#include <map>
 
 #include "Wish.h"
 #include "Player.h"
@@ -26,7 +27,7 @@ void printResults(std::vector<Player>& vec);
 int main(int argc, char* argv[]) {
 	std::string path;
 	if (argc == 1) {
-		path = "../examples/wichteln2.txt";
+		path = "../examples/wichteln3.txt";
 	} else {
 		path = "../examples/" + (std::string)argv[1];
 	}
@@ -50,22 +51,27 @@ int main(int argc, char* argv[]) {
 	}
 
 	std::array< std::unordered_set<int>, 3 > wishes;
+	std::map<int, int> alreadyUsed;
 	std::set<int> usedWishes;
 
+
+	for (int i = 1; i <= amount; i++) {
+		alreadyUsed.insert(std::pair<int, int>(i, 0));
+	}
 	for (auto& i : plyVec) {  // Fill first wishes
 		wishes.at(FIRST).insert(i.getWish(FIRST));
+		alreadyUsed.at(i.getWish(FIRST)) += 1;
 	}
 	for (auto& i : plyVec) {  // Fill second wishes
-		if ( !isIn(wishes.at(FIRST), i.getWish(SECOND)) &&  // Number doesn't occur in higher List
-				std::count(wishes.at(FIRST).begin(), wishes.at(FIRST).end(), i.getWish(FIRST)) != 1) {
+		if ( wishes.at(FIRST).find(i.getWish(SECOND)) == wishes.at(FIRST).end() &&  // Number doesn't occur in higher List
+				alreadyUsed.at(i.getWish(FIRST)) != 1) {  // TODO: I used a set => Everything is unique / Appears only once
 			wishes.at(SECOND).insert(i.getWish(SECOND));  // ^ False if not clearly assigned
 		}
 	}
 	for (auto& i : plyVec) {  // Fill third wishes
 		if (wishes.at(FIRST).find(i.getWish(THIRD)) == wishes.at(FIRST).end() &&
 				wishes.at(SECOND).find(i.getWish(THIRD)) == wishes.at(SECOND).end() &&
-				(std::count(wishes.at(FIRST).begin(), wishes.at(FIRST).end(), i.getWish(FIRST)) != 1 ||
-				std::count(wishes.at(SECOND).begin(), wishes.at(SECOND).end(), i.getWish(SECOND)) != 1)) {
+				alreadyUsed.at(i.getWish(FIRST)) != 1) {
 			wishes.at(THIRD).insert(i.getWish(THIRD));
 		}
 	}
@@ -102,8 +108,6 @@ int main(int argc, char* argv[]) {
 			currentGroup.at(GET<1>(firstObj)).first->setPresent(GET<0>(firstObj));
 			continue;
 		}
-
-
 
 		std::vector<Wish> wishList;  // List with the wishes, the amount they are wished and the players who wish it
 		int counter = 0;
@@ -157,14 +161,20 @@ int main(int argc, char* argv[]) {
 
 	printResults(plyVec);
 
-	return 0;
+	return 0;  // End of program
 }
+
+
 
 int fittingWish(Player*& ply, std::vector<Wish>& wishes) {
 	int counter = 0;
 	for (auto& i : wishes) {
-		if (i.has(ply)) {  // Increment everytime the Player has a wish that's in wishes
-			counter++;
+		if (i.getWish() == ply->getWish(FIRST)) {
+			counter += 1;
+		} else if (i.getWish() == ply->getWish(SECOND)) {
+			counter += 2;
+		} else if (i.getWish() == ply->getWish(THIRD)) {
+			counter += 3;
 		}
 	}
 	return counter;
@@ -210,7 +220,13 @@ int getUnusedWish(int amount, std::set<int>& used) {
 
 void printResults(std::vector<Player>& vec) {  // TODO: Work on the printing / Parameter -> Write in file?
 	for (auto& i : vec) {
-		std::cout << i.getPresent() << ", ";
+		int gift = i.getPresent();
+		std::string wishNum;
+		if (gift == i.getWish(FIRST)) wishNum = "(1.)";
+		else if (gift == i.getWish(SECOND)) wishNum = "(2.)";
+		else if (gift == i.getWish(THIRD)) wishNum = "(3.)";
+		else wishNum = "(N.)";
+		std::cout << i.getPresent() << " " << wishNum << ", ";
 	}
 	std::cout << std::endl;
 }
