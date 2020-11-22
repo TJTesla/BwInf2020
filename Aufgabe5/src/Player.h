@@ -17,12 +17,15 @@ class Player {
 private:
 	std::array<int, 3> wishes{};
 	int present;
+	bool assigned;
 public:
 	Player();
 	explicit Player(std::array<int, 3> wishes);
-	int getWish(WishEnum number) const;
+	[[nodiscard]] int getWish(WishEnum number) const;
 	void setPresent(int number);
-	int getPresent() const;
+	[[nodiscard]] int getPresent() const;
+	void gotAssigned();
+	[[nodiscard]] bool wasAssigned() const;
 
 	bool operator< (const Player& ply) const;
 	bool operator==(const Player& ply) const;

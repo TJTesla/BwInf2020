@@ -18,10 +18,13 @@ public:
 
 	void increaseWishAmount();
 	void setWish(int pWish);
-	int getWish() const;
+	[[nodiscard]] int getWish() const;
 	void newPlayer(Player* ply);
 	std::size_t getAmountPlayer();
 	bool has(Player*& ply);
+	Player* getFirstPlayer();
+	bool isPosition(WishEnum pos);
+	Player* withPosition(WishEnum pos);
 };
 
 

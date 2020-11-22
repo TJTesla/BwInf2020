@@ -17,8 +17,8 @@ bool isIn(T1& storage, T2 variable) {
 }
 
 int fittingWish(Player*& ply, std::vector<Wish>& wishes);
-Player* findPlayerWithLowestWishes(std::vector< std::pair<Player*, int> >& vec);
-int whichWishToBeUsed(Player*& ply, std::vector<Wish>& list, std::set<int>& used);
+Player* findPlayerWithLowestWishes(std::vector< std::pair<Player*, int> >& vec, std::vector<Wish>& list, std::map<int, int>& used, bool& specialSecond, std::set<int>& notToBeUsedAgain);
+int whichWishToBeUsed(Player*& ply, std::vector<Wish>& list, std::set<int>& used, bool state, bool specialSecond, std::vector< std::pair<Player*, int> >& plyList);
 int getUnusedWish(int amount, std::set<int>& used);
 bool find(std::vector<Wish>& vec, int val);
 
@@ -64,8 +64,9 @@ int main(int argc, char* argv[]) {
 	}
 	for (auto& i : plyVec) {  // Fill second wishes
 		if ( wishes.at(FIRST).find(i.getWish(SECOND)) == wishes.at(FIRST).end() &&  // Number doesn't occur in higher List
-				alreadyUsed.at(i.getWish(FIRST)) != 1) {  // TODO: I used a set => Everything is unique / Appears only once
+				alreadyUsed.at(i.getWish(FIRST)) != 1) {
 			wishes.at(SECOND).insert(i.getWish(SECOND));  // ^ False if not clearly assigned
+			alreadyUsed.at(i.getWish(SECOND)) += 1;
 		}
 	}
 	for (auto& i : plyVec) {  // Fill third wishes
@@ -73,6 +74,7 @@ int main(int argc, char* argv[]) {
 				wishes.at(SECOND).find(i.getWish(THIRD)) == wishes.at(SECOND).end() &&
 				alreadyUsed.at(i.getWish(FIRST)) != 1) {
 			wishes.at(THIRD).insert(i.getWish(THIRD));
+			alreadyUsed.at(i.getWish(THIRD)) += 1;
 		}
 	}
 
@@ -131,10 +133,14 @@ int main(int argc, char* argv[]) {
 			i.second = fitting;
 		}
 
+		bool firstWasGiven = false;
 		// Main Algorithm:
 		for (int i = 0; i < currentGroup.size(); i++) {  // Iterate once for every player
-			Player* tempPlayer = findPlayerWithLowestWishes(currentGroup);  // Find out whose wishes occur the least
-			int wishToBeUsed = whichWishToBeUsed(tempPlayer, wishList, usedWishes);  // Find out which present he gets
+			bool specialSecondWasTaken = false;
+			Player* tempPlayer = findPlayerWithLowestWishes(currentGroup, wishList, alreadyUsed, specialSecondWasTaken, usedWishes);  // Find out whose wishes occur the least
+			int wishToBeUsed = whichWishToBeUsed(tempPlayer, wishList, usedWishes, firstWasGiven, specialSecondWasTaken, currentGroup);  // Find out which present he gets
+			tempPlayer->gotAssigned();
+			firstWasGiven = true;
 			if (wishToBeUsed == -1 || tempPlayer->getPresent() != -1) {  // Error prevention
 				continue;
 			}
@@ -142,8 +148,8 @@ int main(int argc, char* argv[]) {
 			usedWishes.insert(wishToBeUsed);
 		}
 
-		std::cout << currentGroup.at(0).first->getWish(FIRST) << ": ";
-		printResults(plyVec);
+		/*std::cout << currentGroup.at(0).first->getWish(FIRST) << ": ";
+		printResults(plyVec); */
 	}
 
 	for (auto& i : plyVec) {
@@ -180,7 +186,15 @@ int fittingWish(Player*& ply, std::vector<Wish>& wishes) {
 	return counter;
 }
 
-Player* findPlayerWithLowestWishes(std::vector< std::pair<Player*, int> >& vec) {
+Player* findPlayerWithLowestWishes(std::vector< std::pair<Player*, int> >& vec, std::vector<Wish>& list, std::map<int, int>& used, bool& specialSecond, std::set<int>& notToBeUsedAgain) {
+	/*for (auto& i : list) {
+		if (used.at(i.getWish()) == 1 && i.isPosition(SECOND)) {  // If there is a wish that only appears once and is a second wish
+			std::cout << "Special Second" << std::endl;
+			specialSecond = true;
+			return i.withPosition(SECOND); // Return the Player with that wish
+		}
+	} */
+
 	std::pair<Player*, int> lowestPair;  // Set up the starting player
 	int counter = 0;  // Starting player is not allowed to have already a fulfilled present
 	do {  // Else this leads to error
@@ -192,20 +206,42 @@ Player* findPlayerWithLowestWishes(std::vector< std::pair<Player*, int> >& vec) 
 	Player* lowestPlayer = lowestPair.first;
 	int lowestAmount = lowestPair.second;
 	for (auto& i : vec) {  // Find person with least wishes fulfillable and who didn't get a present yet
-		if (i.second < lowestAmount && i.first->getPresent() == -1) {
+		if (i.second < lowestAmount && i.first->getPresent() == -1 && !lowestPlayer->wasAssigned()) {
 			lowestAmount = i.second;
 			lowestPlayer = i.first;
 		}
 	}
+	if (used.at(lowestPlayer->getWish(SECOND)) == 1 && notToBeUsedAgain.find(lowestPlayer->getWish(SECOND)) == notToBeUsedAgain.end() && !lowestPlayer->wasAssigned()) {  // TODO: Do something with the special second
+		specialSecond = true;
+	}
 	return lowestPlayer;
 }
 
-int whichWishToBeUsed(Player*& ply, std::vector<Wish>& list, std::set<int>& used) {
-	for (auto& i : list) {  // Use the first-best present
-		if (used.find(i.getWish()) == used.end() && i.has(ply)) {
+int whichWishToBeUsed(Player*& ply, std::vector<Wish>& list, std::set<int>& used, bool state, bool specialSecond, std::vector< std::pair<Player*, int> >& plyList) {  // TODO: Wooork!
+	if (specialSecond && state) {
+		return ply->getWish(SECOND);
+	}
+	if (!state) {
+		return ply->getWish(FIRST);
+	}
+	/*if (!find(list, ply->getWish(SECOND)) && used.find(ply->getWish(SECOND)) == used.end()) {
+		return ply->getWish(SECOND);
+	}
+	if (!find(list, ply->getWish(THIRD)) && used.find(ply->getWish(THIRD)) == used.end()) {
+		return ply->getWish(THIRD);
+	 */
+
+	for (auto& i : list) {  // Use a fitting second wish
+		if (used.find(i.getWish()) == used.end() && i.getWish() == ply->getWish(SECOND)) {
 			return i.getWish();
 		}
 	}
+	for (auto& i : list) {  // Use a fitting third wish
+		if (used.find(i.getWish()) == used.end() && i.getWish() == ply->getWish(THIRD)) {
+			return i.getWish();
+		}
+	}
+
 	return -1;
 }
 
@@ -219,16 +255,18 @@ int getUnusedWish(int amount, std::set<int>& used) {
 }
 
 void printResults(std::vector<Player>& vec) {  // TODO: Work on the printing / Parameter -> Write in file?
+	std::tuple<int, int, int> counter;
 	for (auto& i : vec) {
 		int gift = i.getPresent();
 		std::string wishNum;
-		if (gift == i.getWish(FIRST)) wishNum = "(1.)";
-		else if (gift == i.getWish(SECOND)) wishNum = "(2.)";
-		else if (gift == i.getWish(THIRD)) wishNum = "(3.)";
+		if (gift == i.getWish(FIRST)) { wishNum = "(1.)"; GET<0>(counter) += 1; }
+		else if (gift == i.getWish(SECOND)) { wishNum = "(2.)"; GET<1>(counter) += 1; }
+		else if (gift == i.getWish(THIRD)) { wishNum = "(3.)"; GET<2>(counter) += 1; }
 		else wishNum = "(N.)";
 		std::cout << i.getPresent() << " " << wishNum << ", ";
 	}
 	std::cout << std::endl;
+	std::cout << "1.: " << GET<0>(counter) << "; 2.: " << GET<1>(counter) << "; 3.: " << GET<2>(counter);
 }
 
 bool find(std::vector<Wish>& vec, int val) {  // If val is in vec -> return true; Otherwise false

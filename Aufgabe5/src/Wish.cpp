@@ -32,3 +32,31 @@ std::size_t Wish::getAmountPlayer() {
 bool Wish::has(Player*& ply) {
 	return std::find(plys.begin(), plys.end(), ply) != plys.end();
 }
+
+Player* Wish::getFirstPlayer() {
+	try {
+		return *(this->plys.begin());
+	} catch (std::exception& e) {
+		return nullptr;
+	}
+}
+
+bool Wish::isPosition(WishEnum pos) {
+	bool returnVal = false;
+	for (auto& i : this->plys) {
+		if (i->getWish(pos) == this->wish) {
+			returnVal = true;
+			break;
+		}
+	}
+	return returnVal;
+}
+
+Player* Wish::withPosition(WishEnum pos) {
+	for (auto& i : this->plys) {
+		if (i->getWish(pos) == this->wish) {
+			return i;
+		}
+	}
+	return this->getFirstPlayer();
+}
