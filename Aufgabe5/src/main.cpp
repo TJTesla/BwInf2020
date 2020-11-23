@@ -22,17 +22,27 @@ int whichWishToBeUsed(Player*& ply, std::vector<Wish>& list, std::set<int>& used
 int getUnusedWish(int amount, std::set<int>& used);
 bool find(std::vector<Wish>& vec, int val);
 
-void printResults(std::vector<Player>& vec);
+void printResults(std::vector<Player>& vec, std::ofstream& outFile);
 
 int main(int argc, char* argv[]) {
 	std::string path;
+	std::string defaultFile = "wichteln1.txt";
 	if (argc == 1) {
-		path = "../examples/wichteln3.txt";
+		path = "../examples/"+defaultFile;
 	} else {
 		path = "../examples/" + (std::string)argv[1];
 	}
 	std::ifstream txtFile(path);
 	if (!txtFile) return 1;
+
+	path = "";
+	if (argc == 1) {
+		path = "../out/"+defaultFile;
+	} else {
+		path = "../out/" + (std::string)argv[1];
+	}
+	std::ofstream outFile(path);
+	if (!outFile) return 1;
 
 	std::string fileLineStorage;
 	std::getline(txtFile, fileLineStorage);
@@ -165,7 +175,7 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	printResults(plyVec);
+	printResults(plyVec, outFile);
 
 	return 0;  // End of program
 }
@@ -187,29 +197,37 @@ int fittingWish(Player*& ply, std::vector<Wish>& wishes) {
 }
 
 Player* findPlayerWithLowestWishes(std::vector< std::pair<Player*, int> >& vec, std::vector<Wish>& list, std::map<int, int>& used, bool& specialSecond, std::set<int>& notToBeUsedAgain) {
+	/*for (auto& i : list) {
+		if (used.at(i.getWish()) == 1 && i.isPosition(SECOND)) {  // If there is a wish that only appears once and is a second wish
+			std::cout << "Special Second" << std::endl;
+			specialSecond = true;
+			return i.withPosition(SECOND); // Return the Player with that wish
+		}
+	} */
+
 	std::pair<Player*, int> lowestPair;  // Set up the starting player
 	int counter = 0;  // Starting player is not allowed to have already a fulfilled present
 	do {  // Else this leads to error
 		lowestPair.first = vec.at(counter).first;
 		lowestPair.second = vec.at(counter).second;
 		counter++;
-	} while (lowestPair.first->getPresent() != -1 && counter <= vec.size());
+	} while (lowestPair.first->wasAssigned() && counter <= vec.size());
 
 	Player* lowestPlayer = lowestPair.first;
 	int lowestAmount = lowestPair.second;
 	for (auto& i : vec) {  // Find person with least wishes fulfillable and who didn't get a present yet
-		if (i.second < lowestAmount && i.first->getPresent() == -1 && !lowestPlayer->wasAssigned()) {
+		if (i.second < lowestAmount && i.second != 0 && i.first->getPresent() == -1 && !lowestPlayer->wasAssigned()) {
 			lowestAmount = i.second;
 			lowestPlayer = i.first;
 		}
 	}
-	if (used.at(lowestPlayer->getWish(SECOND)) == 1 && notToBeUsedAgain.find(lowestPlayer->getWish(SECOND)) == notToBeUsedAgain.end() && !lowestPlayer->wasAssigned()) {
+	if (used.at(lowestPlayer->getWish(SECOND)) == 1 && notToBeUsedAgain.find(lowestPlayer->getWish(SECOND)) == notToBeUsedAgain.end() && !lowestPlayer->wasAssigned() && find(list, lowestPlayer->getWish(SECOND))) {  // TODO: Do something with the special second
 		specialSecond = true;
 	}
 	return lowestPlayer;
 }
 
-int whichWishToBeUsed(Player*& ply, std::vector<Wish>& list, std::set<int>& used, bool state, bool specialSecond, std::vector< std::pair<Player*, int> >& plyList) {
+int whichWishToBeUsed(Player*& ply, std::vector<Wish>& list, std::set<int>& used, bool state, bool specialSecond, std::vector< std::pair<Player*, int> >& plyList) {  // TODO: Wooork!
 	if (specialSecond && state) {
 		return ply->getWish(SECOND);
 	}
@@ -240,19 +258,25 @@ int getUnusedWish(int amount, std::set<int>& used) {
 	return -1;
 }
 
-void printResults(std::vector<Player>& vec) {
+void printResults(std::vector<Player>& vec, std::ofstream& outFile) {
 	std::tuple<int, int, int> counter;
+	int playerNum = 1;
 	for (auto& i : vec) {
 		int gift = i.getPresent();
-		std::string wishNum;
-		if (gift == i.getWish(FIRST)) { wishNum = "(1.)"; GET<0>(counter) += 1; }
-		else if (gift == i.getWish(SECOND)) { wishNum = "(2.)"; GET<1>(counter) += 1; }
-		else if (gift == i.getWish(THIRD)) { wishNum = "(3.)"; GET<2>(counter) += 1; }
-		else wishNum = "(N.)";
-		std::cout << i.getPresent() << " " << wishNum << ", ";
+		std::string wishNum = "dem ";
+		if (gift == i.getWish(FIRST)) { wishNum += "1."; GET<0>(counter) += 1; }
+		else if (gift == i.getWish(SECOND)) { wishNum += "2."; GET<1>(counter) += 1; }
+		else if (gift == i.getWish(THIRD)) { wishNum += "3."; GET<2>(counter) += 1; }
+		else wishNum = "keinem";
+		outFile << "Der " << playerNum << ". Teilnehmer bekommt das Geschenk " << i.getPresent();
+		outFile << " (Dies entspricht " << wishNum << " Wunsch)" << std::endl;
+		playerNum++;
 	}
-	std::cout << std::endl;
-	std::cout << "1.: " << GET<0>(counter) << "; 2.: " << GET<1>(counter) << "; 3.: " << GET<2>(counter);
+	std::cout << "Es wurden" << std::endl;
+	std::cout << "'"<< GET<0>(counter) << "' 1. Wünsch(e)" << std::endl;
+	std::cout << "'"<< GET<1>(counter) << "' 2. Wünsch(e) und" << std::endl;
+	std::cout << "'"<< GET<2>(counter) << "' 3. Wünsch(e) erfüllt" << std::endl;
+	//std::cout << "1.: " << GET<0>(counter) << "; 2.: " << GET<1>(counter) << "; 3.: " << GET<2>(counter);
 }
 
 bool find(std::vector<Wish>& vec, int val) {  // If val is in vec -> return true; Otherwise false
