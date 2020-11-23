@@ -22,7 +22,7 @@ class SearchedWord:
 def fillWordLists(missing, given):
     path = './examples/'
     if len(sys.argv) == 1:
-        path = path + 'raetsel0.txt'
+        path = path + 'beispiel1.txt'
     else:
         path = path + sys.argv[1]
 
