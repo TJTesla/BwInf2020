@@ -1,7 +1,3 @@
-//
-// Created by Theodor Teslia on 18.11.20.
-//
-
 #ifndef AUFGABE5_WISH_H
 #define AUFGABE5_WISH_H
 

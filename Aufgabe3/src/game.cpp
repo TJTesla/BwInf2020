@@ -1,9 +1,3 @@
-//
-// Created by Theodor Teslia on 03.10.20.
-//
-
-// TODO: Check for edge cases: e.g. empty input
-
 #include "game.hpp"
 
 void Turnier::add(Player pl) {

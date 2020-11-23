@@ -1,7 +1,3 @@
-//
-// Created by Theodor Teslia on 07.11.20.
-//
-
 #ifndef AUFGABE5_PLAYER_H
 #define AUFGABE5_PLAYER_H
 

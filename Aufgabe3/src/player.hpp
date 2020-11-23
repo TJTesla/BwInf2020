@@ -1,8 +1,3 @@
-//
-// Created by Theodor Teslia on 03.10.20.
-// Saves one Player
-//
-
 #ifndef AUFGABE3_PLAYER_HPP
 #define AUFGABE3_PLAYER_HPP
 

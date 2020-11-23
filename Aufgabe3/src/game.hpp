@@ -1,10 +1,3 @@
-//
-// Created by Theodor Teslia on 03.10.20.
-// File with all classes that simulate the competitions
-// class Turnier as Base class
-// Every other class derives its classes from there
-//
-
 #ifndef AUFGABE3_GAME_HPP
 #define AUFGABE3_GAME_HPP
 

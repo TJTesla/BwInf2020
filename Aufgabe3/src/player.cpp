@@ -1,7 +1,3 @@
-//
-// Created by Theodor Teslia on 03.10.20.
-//
-
 #include "player.hpp"
 
 Player::Player(int pStaerke, int spielerNummer, bool pSortByStrength) {

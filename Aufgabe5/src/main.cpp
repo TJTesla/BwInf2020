@@ -187,14 +187,6 @@ int fittingWish(Player*& ply, std::vector<Wish>& wishes) {
 }
 
 Player* findPlayerWithLowestWishes(std::vector< std::pair<Player*, int> >& vec, std::vector<Wish>& list, std::map<int, int>& used, bool& specialSecond, std::set<int>& notToBeUsedAgain) {
-	/*for (auto& i : list) {
-		if (used.at(i.getWish()) == 1 && i.isPosition(SECOND)) {  // If there is a wish that only appears once and is a second wish
-			std::cout << "Special Second" << std::endl;
-			specialSecond = true;
-			return i.withPosition(SECOND); // Return the Player with that wish
-		}
-	} */
-
 	std::pair<Player*, int> lowestPair;  // Set up the starting player
 	int counter = 0;  // Starting player is not allowed to have already a fulfilled present
 	do {  // Else this leads to error
@@ -211,25 +203,19 @@ Player* findPlayerWithLowestWishes(std::vector< std::pair<Player*, int> >& vec, 
 			lowestPlayer = i.first;
 		}
 	}
-	if (used.at(lowestPlayer->getWish(SECOND)) == 1 && notToBeUsedAgain.find(lowestPlayer->getWish(SECOND)) == notToBeUsedAgain.end() && !lowestPlayer->wasAssigned()) {  // TODO: Do something with the special second
+	if (used.at(lowestPlayer->getWish(SECOND)) == 1 && notToBeUsedAgain.find(lowestPlayer->getWish(SECOND)) == notToBeUsedAgain.end() && !lowestPlayer->wasAssigned()) {
 		specialSecond = true;
 	}
 	return lowestPlayer;
 }
 
-int whichWishToBeUsed(Player*& ply, std::vector<Wish>& list, std::set<int>& used, bool state, bool specialSecond, std::vector< std::pair<Player*, int> >& plyList) {  // TODO: Wooork!
+int whichWishToBeUsed(Player*& ply, std::vector<Wish>& list, std::set<int>& used, bool state, bool specialSecond, std::vector< std::pair<Player*, int> >& plyList) {
 	if (specialSecond && state) {
 		return ply->getWish(SECOND);
 	}
 	if (!state) {
 		return ply->getWish(FIRST);
 	}
-	/*if (!find(list, ply->getWish(SECOND)) && used.find(ply->getWish(SECOND)) == used.end()) {
-		return ply->getWish(SECOND);
-	}
-	if (!find(list, ply->getWish(THIRD)) && used.find(ply->getWish(THIRD)) == used.end()) {
-		return ply->getWish(THIRD);
-	 */
 
 	for (auto& i : list) {  // Use a fitting second wish
 		if (used.find(i.getWish()) == used.end() && i.getWish() == ply->getWish(SECOND)) {
@@ -254,7 +240,7 @@ int getUnusedWish(int amount, std::set<int>& used) {
 	return -1;
 }
 
-void printResults(std::vector<Player>& vec) {  // TODO: Work on the printing / Parameter -> Write in file?
+void printResults(std::vector<Player>& vec) {
 	std::tuple<int, int, int> counter;
 	for (auto& i : vec) {
 		int gift = i.getPresent();
